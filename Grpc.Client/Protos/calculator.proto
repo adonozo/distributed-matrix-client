@@ -1,0 +1,26 @@
+syntax="proto3";
+
+option csharp_namespace="Grpc.Client";
+
+package calculator;
+
+message Row {
+  repeated int32 item = 1;
+}
+
+message Matrices {
+  repeated Row matrixA = 1;
+  repeated Row matrixB = 2;
+}
+
+message Matrix {
+  repeated Row result = 1;
+}
+
+service Multiplication {
+  rpc Multiply(Matrices) returns (Matrix);
+}
+
+service Add {
+  rpc Add(Matrices) returns (Matrix);
+}
