@@ -23,6 +23,7 @@ namespace Rest.Client.Services
             serversAvailable = this.grpcClient.ServersAvailable;
         }
 
+        // TODO implement fingerprint...
         public async Task<int[][]> MultiplyMatricesMultipleServersAsync(int[][] matrixA, int[][] matrixB, int minSubMatrixSize = 16)
         {
             return await this.MultiplyMatricesAsync(matrixA, matrixB, minSubMatrixSize, true);

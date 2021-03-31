@@ -27,6 +27,7 @@ namespace Rest.Client
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo {Title = "Rest.Client", Version = "v1"}); });
             services.AddSingleton(new GrpcClient(grpcServers));
             services.AddScoped<MatrixService>();
+            services.AddSingleton<MatrixStorageService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
