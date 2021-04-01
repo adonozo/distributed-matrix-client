@@ -10,4 +10,4 @@ To run the project:
 dotnet Grpc.Client.dll
 ```
 
-Make sure the gRPC is running and the server URL(s) are listed in `appsettings.json` under __GrpcServers__
+Make sure the gRPC server is running and their URL(s) are listed in `appsettings.json` under __GrpcServers__

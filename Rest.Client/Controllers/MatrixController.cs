@@ -29,42 +29,42 @@ namespace Rest.Client.Controllers
             this.storageService = storageService;
         }
 
-        // /// <summary>
-        // /// Uploads a matrix and saves it in memory. It can read any comma separated file, but the matrix must be
-        // /// square with a size equal to a power of 2 (size = n^2).
-        // /// </summary>
-        // /// <returns></returns>
-        // // ReSharper disable TemplateIsNotCompileTimeConstantProblem
-        // [HttpPost]
-        // [Route("/matrix")]
-        // public async Task<IActionResult> UploadMatrixFile()
-        // {
-        //     int[][] matrix;
-        //     try
-        //     {
-        //         var file = await this.GetFirstFile();
-        //         matrix = await Helper.GetMatrixFromFile(file);
-        //     }
-        //     catch (FileLoadException e)
-        //     {
-        //         logger.LogWarning(e, e.Message);
-        //         return BadRequest(e.Message);
-        //     }
-        //     catch (ArgumentException e)
-        //     {
-        //         logger.LogWarning(e, e.Message);
-        //         return BadRequest(e.Message);
-        //     }
-        //     catch (Exception)
-        //     {
-        //         logger.LogWarning("The matrix cannot be parsed");
-        //         return BadRequest("The matrix cannot be parsed");
-        //     }
-        //     
-        //     var matrixResult = await matrixService.MultiplyMatricesMultipleServersAsync(matrix, matrix, 8);
-        //     var response = matrixResult.Stringify();
-        //     return Ok(response);
-        // }
+        /// <summary>
+        /// Uploads a matrix and saves it in memory. It can read any comma separated file, but the matrix must be
+        /// square with a size equal to a power of 2 (size = n^2).
+        /// </summary>
+        /// <returns></returns>
+        // ReSharper disable TemplateIsNotCompileTimeConstantProblem
+        [HttpPost]
+        [Route("/matrix")]
+        public async Task<IActionResult> UploadMatrixFile()
+        {
+            int[][] matrix;
+            try
+            {
+                var file = await this.GetFirstFile();
+                matrix = await Helper.GetMatrixFromFile(file);
+            }
+            catch (FileLoadException e)
+            {
+                logger.LogWarning(e, e.Message);
+                return BadRequest(e.Message);
+            }
+            catch (ArgumentException e)
+            {
+                logger.LogWarning(e, e.Message);
+                return BadRequest(e.Message);
+            }
+            catch (Exception)
+            {
+                logger.LogWarning("The matrix cannot be parsed");
+                return BadRequest("The matrix cannot be parsed");
+            }
+            
+            var matrixResult = await matrixService.MultiplyMatricesFingerPrintAsync(matrix, matrix, 100, 8);
+            var response = matrixResult.Stringify();
+            return Ok(response);
+        }
         
         /// <summary>
         /// Uploads a matrix and saves it in memory. It can read any comma separated file, but the matrix must be
@@ -113,7 +113,7 @@ namespace Rest.Client.Controllers
             return Ok(this.storageService.GetMatricesList());
         }
 
-        // TODO test this...
+        // TODO VALIDATE and test this (with multi-server). Then, remove UploadMatrixFile
         [HttpGet]
         [Route("/matrices/multiply")]
         public async Task<IActionResult> MultiplyMatrices([FromQuery] string matrixAId, [FromQuery] string matrixBId,

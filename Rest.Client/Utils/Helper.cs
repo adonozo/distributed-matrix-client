@@ -10,13 +10,20 @@ namespace Rest.Client.Utils
 {
     public static class Helper
     {
+        /// <summary>
+        /// Parse a matrix from a comma-separated file without headers. The matrix must have a size of a power of 2 and
+        /// be square.
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static async Task<int[][]> GetMatrixFromFile(IFormFile file)
         {
             using var reader = new StreamReader(file.OpenReadStream());
             var firstLineRead = true;
             var matrix = Array.Empty<int[]>();
             var matrixSize = 0;
-            var index = 0;
+            var index = 1;
             while (!reader.EndOfStream)
             {
                 var line = await reader.ReadLineAsync();
@@ -30,20 +37,24 @@ namespace Rest.Client.Utils
                     continue;
                 }
 
-                index++;
-                var row = GetIntArray(line);
-                if (row.Length != matrixSize)
+                matrix[index] = GetIntArray(line);
+                if (matrix[index].Length != matrixSize)
                 {
                     throw new ArgumentException("The matrix is not square");
                 }
 
-                matrix[index] = row;
+                index++;
+            }
+
+            if (matrixSize != index || Math.Sqrt(matrixSize) % 2 != 0)
+            {
+                throw new ArgumentException("The matrix is not square or does not have a size of a power of 2.");
             }
 
             return matrix;
         }
 
-        public static string Stringify(this int[][] matrix)
+        public static string Stringify(this IEnumerable<int[]> matrix)
         {
             var response = string.Empty;
             foreach (var row in matrix)
@@ -76,10 +87,7 @@ namespace Rest.Client.Utils
                 for (int i = row, k = 0; i < row + blocksSize; i++, k++)
                 {
                     subMatrix[k] = new int[blocksSize];
-                    for (int j = column, l = 0; j < column + blocksSize; j++ , l++)
-                    {
-                        subMatrix[k][l] = matrix[i][j];
-                    }
+                    Array.Copy(matrix[i], column, subMatrix[k], 0, blocksSize);
                 }
 
                 matrixBlocks[index] = subMatrix;
@@ -113,14 +121,22 @@ namespace Rest.Client.Utils
                 var column = columnBlock * blocksSize;
                 for (int i = row, k = 0; i < row + blocksSize; i++, k++)
                 {
-                    for (int j = column, l = 0; j < column + blocksSize; j++, l++)
-                    {
-                        result[i][j] = concurrentMatrices[index][k][l];
-                    }
+                    Array.Copy(concurrentMatrices[index][k], 0, result[i], column, blocksSize);
                 }
             });
 
             return result;
+        }
+
+        public static IEnumerable<int[]> GetInitialSubMatrix(int[][] matrix, int size)
+        {
+            var subMatrix = new int[size][];
+            for (var i = 0; i < size; i++)
+            {
+                subMatrix[i] = new int[size];
+                Array.Copy(matrix[i], subMatrix[i], size);
+            }
+            return subMatrix;
         }
         
         #nullable enable
