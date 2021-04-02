@@ -21,6 +21,10 @@ service Multiplication {
   rpc Multiply(Matrices) returns (Matrix);
 }
 
+service MultiThreadMultiplication {
+  rpc Multiply(Matrices) returns (Matrix);
+}
+
 service Add {
   rpc Add(Matrices) returns (Matrix);
 }

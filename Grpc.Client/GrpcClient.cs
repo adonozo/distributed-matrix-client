@@ -52,6 +52,22 @@ namespace Grpc.Client
                 .ToArray();
         }
 
+        public async Task<int[][]> MultiplyMatrixMultiThreadAsync(IEnumerable<int[]> matrixA, IEnumerable<int[]> matrixB, string server)
+        {
+            using var channel = GrpcChannel.ForAddress(server);
+            var client = new MultiThreadMultiplication.MultiThreadMultiplicationClient(channel);
+            var matrices = new Matrices
+            {
+                MatrixA = {matrixA.Select(row => new Row {Item = {row}})},
+                MatrixB = {matrixB.Select(row => new Row {Item = {row}})},
+            };
+            var reply = await client.MultiplyAsync(matrices);
+            channel.Dispose();
+            return reply.Result
+                .Select(row => row.Item.ToArray())
+                .ToArray();
+        }
+
         public async Task<int[][]> AddMatrixAsync(IEnumerable<int[]> matrixA, IEnumerable<int[]> matrixB, int server = 0)
         {
             using var channel = GrpcChannel.ForAddress(grpcServers[server]);

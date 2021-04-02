@@ -26,12 +26,12 @@ namespace Rest.Client.Services
         }
 
         // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
-        public async Task<int[][]> MultiplyMatricesFingerPrintAsync(int[][] matrixA, int[][] matrixB, long deadline, 
+        public async Task<int[][]> MultiplyMatricesFootprintAsync(int[][] matrixA, int[][] matrixB, long deadline, 
             int minSubMatrixSize = 16)
         {
-            var fingerprint = this.GetMatrixMultiplicationTime(matrixA, matrixB, minSubMatrixSize);
+            var footprint = this.GetMatrixMultiplicationTime(matrixA, matrixB, minSubMatrixSize);
             var multiplicationsRequired = Math.Pow(8, matrixA.Length / minSubMatrixSize - 1);
-            var serversRequired = (int) Math.Ceiling(fingerprint * multiplicationsRequired / deadline);
+            var serversRequired = (int) Math.Ceiling(footprint * multiplicationsRequired / deadline);
             var serversToUse = Math.Min(serversRequired, serversAvailable);
             this.logger.LogInformation($"Required servers for this request: {serversRequired}" +
                                        $" | Servers Available : {serversAvailable} | Servers to use: {serversToUse}");
@@ -41,6 +41,24 @@ namespace Rest.Client.Services
         public async Task<int[][]> MultiplyMatricesMultipleServersAsync(int[][] matrixA, int[][] matrixB, int minSubMatrixSize = 16)
         {
             return await this.MultiplyMatricesAsync(matrixA, matrixB, this.serversAvailable, minSubMatrixSize);
+        }
+
+        public async Task<int[][]> MultiplyMatricesMultiThreadsAsync(int[][] matrixA, int[][] matrixB, string server,
+            int minSubMatrixSize = 16)
+        {
+            var size = matrixA.Length;
+            if (size <= minSubMatrixSize)
+            {
+                return await grpcClient.MultiplyMatrixMultiThreadAsync(matrixA, matrixB, server);
+            }
+        
+            var subMatrixSize = size / 2;
+            var subMatricesA = Helper.BreakMatrix(matrixA, subMatrixSize);
+            var subMatricesB = Helper.BreakMatrix(matrixB, subMatrixSize);
+            var concurrentResult = new ConcurrentDictionary<int, int[][]>();
+        
+            await PerformMultiThreadMultiplication(subMatricesA, subMatricesB, concurrentResult, server, subMatrixSize);
+            return concurrentResult.ToPlainMatrix();
         }
 
         public async Task<int[][]> MultiplyMatricesSingleServerAsync(int[][] matrixA, int[][] matrixB, int minSubMatrixSize = 16)
@@ -102,6 +120,42 @@ namespace Rest.Client.Services
                 }
             }));
         }
+        
+        private async Task PerformMultiThreadMultiplication(ConcurrentDictionary<int, int[][]> subMatricesA,
+            ConcurrentDictionary<int, int[][]> subMatricesB, ConcurrentDictionary<int, int[][]> concurrentResult,
+            string server, int minSubMatrixSize)
+        {
+            await Task.WhenAll(Enumerable.Range(0, 4).Select(async index =>
+            {
+                switch (index)
+                {
+                    case 0:
+                        concurrentResult[0] = await grpcClient.AddMatrixAsync(
+                            await this.MultiplyMatricesMultiThreadsAsync(subMatricesA[0], subMatricesB[0], server, minSubMatrixSize),
+                            await this.MultiplyMatricesMultiThreadsAsync(subMatricesA[1], subMatricesB[2], server, minSubMatrixSize)
+                        );
+                        break;
+                    case 1:
+                        concurrentResult[1] = await grpcClient.AddMatrixAsync(
+                            await this.MultiplyMatricesMultiThreadsAsync(subMatricesA[0], subMatricesB[1], server, minSubMatrixSize),
+                            await this.MultiplyMatricesMultiThreadsAsync(subMatricesA[1], subMatricesB[3], server, minSubMatrixSize)
+                        );
+                        break;
+                    case 2:
+                        concurrentResult[2] = await grpcClient.AddMatrixAsync(
+                            await this.MultiplyMatricesMultiThreadsAsync(subMatricesA[2], subMatricesB[0], server, minSubMatrixSize),
+                            await this.MultiplyMatricesMultiThreadsAsync(subMatricesA[3], subMatricesB[2], server, minSubMatrixSize)
+                        );
+                        break;
+                    case 3:
+                        concurrentResult[3] = await grpcClient.AddMatrixAsync(
+                            await this.MultiplyMatricesMultiThreadsAsync(subMatricesA[2], subMatricesB[1], server, minSubMatrixSize),
+                            await this.MultiplyMatricesMultiThreadsAsync(subMatricesA[3], subMatricesB[3], server, minSubMatrixSize)
+                        );
+                        break;
+                }
+            }));
+        }
 
         // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
         private long GetMatrixMultiplicationTime(int[][] matrixA, int[][] matrixB, int minSubMatrixSize)
@@ -113,9 +167,9 @@ namespace Rest.Client.Services
             watch.Start();
             this.grpcClient.MultiplyMatrix(subMatrixA, subMatrixB);
             watch.Stop();
-            var fingerprint = watch.ElapsedMilliseconds;
-            this.logger.LogInformation($"Fingerprint time: {fingerprint} ms");
-            return fingerprint;
+            var footprint = watch.ElapsedMilliseconds;
+            this.logger.LogInformation($"Footprint time: {footprint} ms");
+            return footprint;
         }
     }
 }
