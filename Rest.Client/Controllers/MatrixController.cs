@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 using Rest.Client.Enums;
 using Rest.Client.Services;
 using Rest.Client.Utils;
@@ -33,54 +34,18 @@ namespace Rest.Client.Controllers
         /// Uploads a matrix and saves it in memory. It can read any comma separated file, but the matrix must be
         /// square with a size equal to a power of 2 (size = n^2).
         /// </summary>
-        /// <returns></returns>
-        // ReSharper disable TemplateIsNotCompileTimeConstantProblem
-        [HttpPost]
-        [Route("/matrix")]
-        public async Task<IActionResult> UploadMatrixFile()
-        {
-            int[][] matrix;
-            try
-            {
-                var file = await this.GetFirstFile();
-                matrix = await Helper.GetMatrixFromFile(file);
-            }
-            catch (FileLoadException e)
-            {
-                logger.LogWarning(e, e.Message);
-                return BadRequest(e.Message);
-            }
-            catch (ArgumentException e)
-            {
-                logger.LogWarning(e, e.Message);
-                return BadRequest(e.Message);
-            }
-            catch (Exception)
-            {
-                logger.LogWarning("The matrix cannot be parsed");
-                return BadRequest("The matrix cannot be parsed");
-            }
-            
-            var matrixResult = await matrixService.MultiplyMatricesFingerPrintAsync(matrix, matrix, 100, 8);
-            var response = matrixResult.Stringify();
-            return Ok(response);
-        }
-        
-        /// <summary>
-        /// Uploads a matrix and saves it in memory. It can read any comma separated file, but the matrix must be
-        /// square with a size equal to a power of 2 (size = n^2).
-        /// </summary>
         /// <returns>The matrix ID if inserted.</returns>
         // ReSharper disable TemplateIsNotCompileTimeConstantProblem
         [HttpPost]
         [Route("/matrices")]
-        public async Task<IActionResult> PostMatrix()
+        public async Task<IActionResult> PostMatrix([FromForm] IFormFile file)
         {
-            int[][] matrix;
             try
             {
-                var file = await this.GetFirstFile();
-                matrix = await Helper.GetMatrixFromFile(file);
+                // var file = await this.GetFirstFile();
+                var matrix = await Helper.GetMatrixFromFile(file);
+                var id = this.storageService.SaveMatrix(matrix);
+                return Ok(id);
             }
             catch (FileLoadException e)
             {
@@ -92,14 +57,11 @@ namespace Rest.Client.Controllers
                 logger.LogWarning(e, e.Message);
                 return BadRequest(e.Message);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                logger.LogWarning("The matrix cannot be parsed");
+                logger.LogWarning(e, "The matrix cannot be parsed: " + e.Message);
                 return BadRequest("The matrix cannot be parsed");
             }
-
-            var id = this.storageService.SaveMatrix(matrix);
-            return Ok(id);
         }
 
         /// <summary>
@@ -113,11 +75,10 @@ namespace Rest.Client.Controllers
             return Ok(this.storageService.GetMatricesList());
         }
 
-        // TODO VALIDATE and test this (with multi-server). Then, remove UploadMatrixFile
         [HttpGet]
         [Route("/matrices/multiply")]
         public async Task<IActionResult> MultiplyMatrices([FromQuery] string matrixAId, [FromQuery] string matrixBId,
-            [FromQuery] MatrixMultiplicationMode mode, [FromQuery] int matrixSize = 16)
+            [FromQuery] MatrixMultiplicationMode mode, [FromQuery] int deadline, [FromQuery] string server, [FromQuery] int matrixSize = 16)
         {
             if (!Guid.TryParse(matrixAId, out var idA) || !Guid.TryParse(matrixBId, out var idB))
             {
@@ -130,6 +91,12 @@ namespace Rest.Client.Controllers
                 int[][] matrixResult;
                 switch (mode)
                 {
+                    case MatrixMultiplicationMode.SingleServerMultiThread:
+                        matrixResult = await matrixService.MultiplyMatricesMultiThreadsAsync(matrixA, matrixB, server, matrixSize);
+                        break;
+                    case MatrixMultiplicationMode.MultipleServersFootprint:
+                        matrixResult = await matrixService.MultiplyMatricesFootprintAsync(matrixA, matrixB, deadline, matrixSize);
+                        break;
                     case MatrixMultiplicationMode.MultipleSevers :
                         matrixResult = await matrixService.MultiplyMatricesMultipleServersAsync(matrixA, matrixB, matrixSize);
                         break;
@@ -144,29 +111,31 @@ namespace Rest.Client.Controllers
                     }
                 }
                 
-                var response = matrixResult.Stringify();
-                return Ok(response);
+                var stream = new MemoryStream();
+                var streamWriter = new StreamWriter(stream);
+                foreach (var row in matrixResult)
+                {
+                    foreach (var t in row)
+                    {
+                        await streamWriter.WriteAsync(t + " ");
+                    }
+
+                    await streamWriter.WriteLineAsync();
+                }
+
+                await streamWriter.FlushAsync();
+                stream.Position = 0;
+                return new FileStreamResult(stream, new MediaTypeHeaderValue("text/plain"));
             }
             catch (KeyNotFoundException e)
             {
                 return NotFound(e.Message);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                this.logger.LogWarning(e, "There was an error multiplying the matrices");
                 return StatusCode(500);
             }
-        }
-
-        private async Task<IFormFile> GetFirstFile()
-        {
-            var formCollection = await Request.ReadFormAsync();
-            var file = formCollection.Files[0];
-            if (file.Length == 0)
-            {
-                throw new FileLoadException("The file is empty");
-            }
-
-            return file;
         }
 
         private Tuple<int[][], int[][]> GetMatrices(Guid idA, Guid idB)

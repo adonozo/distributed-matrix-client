@@ -28,7 +28,7 @@ namespace Rest.Client.Services
             var valueExists = this.matrices.TryGetValue(id, out var matrix);
             if (!valueExists)
             {
-                throw new KeyNotFoundException($"The ID {id} does not exists");
+                throw new KeyNotFoundException($"The ID {id} does not exist");
             }
 
             return matrix;

@@ -4,6 +4,8 @@ namespace Rest.Client.Enums
     {
         SingleServerSingleMatrix,
         SingleServerSubMatrices,
-        MultipleSevers
+        MultipleSevers,
+        MultipleServersFootprint,
+        SingleServerMultiThread
     }
 }

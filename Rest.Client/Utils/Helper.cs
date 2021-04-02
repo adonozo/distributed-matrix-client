@@ -46,24 +46,12 @@ namespace Rest.Client.Utils
                 index++;
             }
 
-            if (matrixSize != index || Math.Sqrt(matrixSize) % 2 != 0)
+            if (matrixSize != index || (matrixSize & (matrixSize - 1)) != 0)
             {
                 throw new ArgumentException("The matrix is not square or does not have a size of a power of 2.");
             }
 
             return matrix;
-        }
-
-        public static string Stringify(this IEnumerable<int[]> matrix)
-        {
-            var response = string.Empty;
-            foreach (var row in matrix)
-            {
-                response = row.Aggregate(response, (current, number) => current + (number + " "));
-                response += '\n';
-            }
-
-            return response;
         }
 
         /// <summary>

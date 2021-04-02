@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Grpc.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -24,6 +25,11 @@ namespace Rest.Client
         {
             var grpcServers = new List<string>(Configuration.GetSection("GrpcServers").Get<string[]>());
             services.AddControllers();
+            services.Configure<FormOptions>(options =>
+            {
+                options.ValueLengthLimit = int.MaxValue;
+                options.MultipartBodyLengthLimit = int.MaxValue;
+            });
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo {Title = "Rest.Client", Version = "v1"}); });
             services.AddSingleton(new GrpcClient(grpcServers));
             services.AddScoped<MatrixService>();
