@@ -44,7 +44,7 @@ namespace Rest.Client.Services
         }
 
         public async Task<int[][]> MultiplyMatricesMultiThreadsAsync(int[][] matrixA, int[][] matrixB, string server,
-            int minSubMatrixSize = 16)
+            int minSubMatrixSize = 128)
         {
             var size = matrixA.Length;
             if (size <= minSubMatrixSize)
