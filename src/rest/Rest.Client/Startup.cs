@@ -7,9 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Rest.Client.Services;
+using Rest.Services;
 
-namespace Rest.Client
+namespace Client
 {
     public class Startup
     {

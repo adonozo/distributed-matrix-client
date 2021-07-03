@@ -5,9 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Client;
 using Microsoft.Extensions.Logging;
-using Rest.Client.Utils;
+using Rest.Services.Utils;
 
-namespace Rest.Client.Services
+namespace Rest.Services
 {
     /// <summary>
     /// The Matrix Service. It manages matrices multiplication.
@@ -53,8 +53,8 @@ namespace Rest.Client.Services
             }
         
             var subMatrixSize = size / 2;
-            var subMatricesA = Helper.BreakMatrix(matrixA, subMatrixSize);
-            var subMatricesB = Helper.BreakMatrix(matrixB, subMatrixSize);
+            var subMatricesA = MatrixHelper.BreakMatrix(matrixA, subMatrixSize);
+            var subMatricesB = MatrixHelper.BreakMatrix(matrixB, subMatrixSize);
             var concurrentResult = new ConcurrentDictionary<int, int[][]>();
         
             await PerformMultiThreadMultiplication(subMatricesA, subMatricesB, concurrentResult, server, subMatrixSize);
@@ -77,8 +77,8 @@ namespace Rest.Client.Services
             }
         
             var subMatrixSize = size / 2;
-            var subMatricesA = Helper.BreakMatrix(matrixA, subMatrixSize);
-            var subMatricesB = Helper.BreakMatrix(matrixB, subMatrixSize);
+            var subMatricesA = MatrixHelper.BreakMatrix(matrixA, subMatrixSize);
+            var subMatricesB = MatrixHelper.BreakMatrix(matrixB, subMatrixSize);
             var concurrentResult = new ConcurrentDictionary<int, int[][]>();
         
             await PerformMatrixMultiplication(subMatricesA, subMatricesB, concurrentResult, serversToUse, subMatrixSize);
@@ -160,8 +160,8 @@ namespace Rest.Client.Services
         // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
         private long GetMatrixMultiplicationTime(int[][] matrixA, int[][] matrixB, int minSubMatrixSize)
         {
-            var subMatrixA = Helper.GetInitialSubMatrix(matrixA, minSubMatrixSize);
-            var subMatrixB = Helper.GetInitialSubMatrix(matrixB, minSubMatrixSize);
+            var subMatrixA = MatrixHelper.GetInitialSubMatrix(matrixA, minSubMatrixSize);
+            var subMatrixB = MatrixHelper.GetInitialSubMatrix(matrixB, minSubMatrixSize);
             
             var watch = new Stopwatch();
             watch.Start();

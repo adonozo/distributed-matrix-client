@@ -1,4 +1,4 @@
-namespace Rest.Client.Enums
+namespace Client.Enums
 {
     public enum MatrixMultiplicationMode
     {

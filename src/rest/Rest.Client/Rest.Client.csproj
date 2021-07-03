@@ -11,5 +11,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\grpc\Grpc.Client\Grpc.Client.csproj" />
+      <ProjectReference Include="..\Rest.Services\Rest.Services.csproj" />
     </ItemGroup>
 </Project>

@@ -4,4 +4,8 @@
         <TargetFramework>net5.0</TargetFramework>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\grpc\Grpc.Client\Grpc.Client.csproj" />
+    </ItemGroup>
+
 </Project>

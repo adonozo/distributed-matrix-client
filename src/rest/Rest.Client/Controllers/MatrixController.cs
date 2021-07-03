@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
-using Rest.Client.Enums;
-using Rest.Client.Services;
-using Rest.Client.Utils;
+using Client.Enums;
+using Client.Utils;
+using Rest.Services;
 
-namespace Rest.Client.Controllers
+namespace Client.Controllers
 {
     /// <summary>
     /// The Matrix controller. Has endpoints to upload matrices, list, and multiply them.

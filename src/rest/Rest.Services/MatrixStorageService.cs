@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Rest.Client.Services
+namespace Rest.Services
 {
     /// <summary>
     /// Manages matrix storage and retrieval; 
