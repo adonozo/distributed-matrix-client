@@ -6,7 +6,7 @@ using Grpc.Net.Client;
 namespace Grpc.Client
 {
     /// <summary>
-    /// The GRPC Client. Calls remote methods on the GRPC server, Add and Multiply matrices. Both methods have a sync
+    /// The GRPC Client. Calls remote methods on the GRPC server: Add and Multiply matrices. Both methods have sync
     /// and async implementations.
     /// </summary>
     public class GrpcClient

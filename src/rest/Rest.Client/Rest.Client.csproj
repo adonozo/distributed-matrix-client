@@ -10,6 +10,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Grpc.Client\Grpc.Client.csproj" />
+      <ProjectReference Include="..\..\grpc\Grpc.Client\Grpc.Client.csproj" />
     </ItemGroup>
 </Project>
