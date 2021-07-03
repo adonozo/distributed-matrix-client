@@ -10,7 +10,10 @@ using Rest.Services.Utils;
 namespace Rest.Services
 {
     /// <summary>
-    /// The Matrix Service. It manages matrices multiplication.
+    /// The Matrix Service. Supports all matrix multiplication modes but all actual multiplications are performed in the
+    /// server. The methods from this service break the matrix and prepare it to send it over the network as a smaller
+    /// chunk. This improves performance because reduces network time in large matrices, and allows to send chunks to
+    /// different serves, dividing the processing work.
     /// </summary>
     public class MatrixService
     {
@@ -26,6 +29,17 @@ namespace Rest.Services
         }
 
         // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
+        /// <summary>
+        /// Tries to guess the number of servers required to perform the multiplication within the deadline. The number
+        /// of servers available are obtained from the application settings at startup.
+        /// The client will first calculate how much time it takes to multiply one sub-matrix, then will get the number
+        /// of required servers. 
+        /// </summary>
+        /// <param name="matrixA">The matrix A</param>
+        /// <param name="matrixB">The matrix B</param>
+        /// <param name="deadline">The deadline to meet, in milliseconds</param>
+        /// <param name="minSubMatrixSize">Matrices A and B will be broken down until this size. Defaults to 16.</param>
+        /// <returns>An awaitable int matrix with the multiplication result</returns>
         public async Task<int[][]> MultiplyMatricesFootprintAsync(int[][] matrixA, int[][] matrixB, long deadline, 
             int minSubMatrixSize = 16)
         {
@@ -43,6 +57,15 @@ namespace Rest.Services
             return await this.MultiplyMatricesAsync(matrixA, matrixB, this.serversAvailable, minSubMatrixSize);
         }
 
+        /// <summary>
+        /// Performs matrix multiplication as a parallel task in the server. Only one server is called.
+        /// This method is recursive, as defined in the divide and conquer multiplication approach. 
+        /// </summary>
+        /// <param name="matrixA">The matrix A</param>
+        /// <param name="matrixB">The matrix B</param>
+        /// <param name="server">The multicore server address</param>
+        /// <param name="minSubMatrixSize">Matrices A and B will be broken down until this size. Defaults to 128</param>
+        /// <returns>An awaitable int matrix with the multiplication result</returns>
         public async Task<int[][]> MultiplyMatricesMultiThreadsAsync(int[][] matrixA, int[][] matrixB, string server,
             int minSubMatrixSize = 128)
         {

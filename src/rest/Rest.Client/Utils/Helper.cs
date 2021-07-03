@@ -1,8 +1,8 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Rest.Services.Utils;
 
 namespace Client.Utils
 {
@@ -28,14 +28,14 @@ namespace Client.Utils
                 if (firstLineRead)
                 {
                     firstLineRead = false;
-                    var firstRow = MatrixHelper.GetIntArray(line);
+                    var firstRow = GetIntArray(line);
                     matrixSize = firstRow.Length;
                     matrix = new int[matrixSize][];
                     matrix[0] = firstRow;
                     continue;
                 }
 
-                matrix[index] = MatrixHelper.GetIntArray(line);
+                matrix[index] = GetIntArray(line);
                 if (matrix[index].Length != matrixSize)
                 {
                     throw new ArgumentException("The matrix is not square");
@@ -50,6 +50,28 @@ namespace Client.Utils
             }
 
             return matrix;
+        }
+        
+        #nullable enable
+        private static int[] GetIntArray(string? line)
+        {
+            if (line == null)
+            {
+                throw new ArgumentException("The line is empty");
+            }
+
+            int[] row;
+            try
+            {
+                row = line.Split(',').Select(int.Parse).ToArray();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw new ArgumentException("The line is not a number array");
+            }
+
+            return row;
         }
     }
 }

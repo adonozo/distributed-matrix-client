@@ -5,7 +5,8 @@ using System.Linq;
 namespace Rest.Services
 {
     /// <summary>
-    /// Manages matrix storage and retrieval; 
+    /// Manages matrix storage and retrieval. Matrices are stored in a <see cref="Dictionary{TKey,TValue}"/> where
+    /// each matrix has an associated <see cref="Guid"/> as key. 
     /// </summary>
     public class MatrixStorageService
     {

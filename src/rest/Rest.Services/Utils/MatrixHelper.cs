@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Rest.Services.Utils
@@ -79,28 +78,6 @@ namespace Rest.Services.Utils
                 Array.Copy(matrix[i], subMatrix[i], size);
             }
             return subMatrix;
-        }
-        
-        #nullable enable
-        public static int[] GetIntArray(string? line)
-        {
-            if (line == null)
-            {
-                throw new ArgumentException("The line is empty");
-            }
-
-            int[] row;
-            try
-            {
-                row = line.Split(',').Select(int.Parse).ToArray();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw new ArgumentException("The line is not a number array");
-            }
-
-            return row;
         }
     }
 }

@@ -75,6 +75,23 @@ namespace Client.Controllers
             return Ok(this.storageService.GetMatricesList());
         }
 
+        /// <summary>
+        /// Matrix multiplication given two matrices IDs. Matrices must been already uploaded and must have the same size.
+        /// The multiplication mode, <see cref="MatrixMultiplicationMode"/>, controls how the multiplication is performed
+        /// in a distributed environment.
+        /// The result is returned as a <see cref="FileStreamResult"/> to improve the response time.
+        /// </summary>
+        /// <param name="matrixAId">The ID generated for matrix A.</param>
+        /// <param name="matrixBId">The ID generated for matrix B.</param>
+        /// <param name="mode">The multiplication mode defined as an enum: <see cref="MatrixMultiplicationMode"/></param>
+        /// <param name="deadline">The time on milliseconds in which the multiplication should be completed. Used when the
+        /// mode is <see cref="MatrixMultiplicationMode.MultipleServersFootprint"/>.</param>
+        /// <param name="server">The server where the multiplication will be performed. Only used when <see cref="MatrixMultiplicationMode.SingleServerMultiThread"/>
+        /// is used as mode.</param>
+        /// <param name="matrixSize">Optional. The sub-matrix size used in the "divide and conquer" algorithm. Must be a
+        /// power of 2. Defaults to 16</param>
+        /// <returns>An <see cref="IActionResult"/>. If the multiplication is possible, returns a text/plain file. Otherwise,
+        /// returns an error response.</returns>
         [HttpGet]
         [Route("/matrices/multiply")]
         public async Task<IActionResult> MultiplyMatrices([FromQuery] string matrixAId, [FromQuery] string matrixBId,
@@ -110,21 +127,8 @@ namespace Client.Controllers
                         break;
                     }
                 }
-                
-                var stream = new MemoryStream();
-                var streamWriter = new StreamWriter(stream);
-                foreach (var row in matrixResult)
-                {
-                    foreach (var t in row)
-                    {
-                        await streamWriter.WriteAsync(t + " ");
-                    }
 
-                    await streamWriter.WriteLineAsync();
-                }
-
-                await streamWriter.FlushAsync();
-                stream.Position = 0;
+                var stream = await this.StreamMatrixResult(matrixResult);
                 return new FileStreamResult(stream, new MediaTypeHeaderValue("text/plain"));
             }
             catch (KeyNotFoundException e)
@@ -148,6 +152,26 @@ namespace Client.Controllers
             }
 
             return new Tuple<int[][], int[][]>(matrixA, matrixB);
+        }
+
+        private async Task<MemoryStream> StreamMatrixResult(int[][] matrix)
+        {
+            var stream = new MemoryStream();
+            var streamWriter = new StreamWriter(stream);
+            foreach (var row in matrix)
+            {
+                foreach (var t in row)
+                {
+                    await streamWriter.WriteAsync(t + " ");
+                }
+
+                await streamWriter.WriteLineAsync();
+            }
+
+            await streamWriter.FlushAsync();
+            stream.Position = 0;
+
+            return stream;
         }
     }
 }
